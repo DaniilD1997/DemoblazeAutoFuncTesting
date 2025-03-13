@@ -1,0 +1,73 @@
+const puppeteer = require('puppeteer'); 
+
+const URL_TEST = 'https://www.demoblaze.com/';
+
+async function testProductStore() {
+    console.log('Запуск браузера');
+    const browser = await puppeteer.launch({
+        headless: false, // выключен безголовый режим
+        args: ['--start-maximized'], // открыть на полный экран
+        slowMo: 40, // замедление, чтобы отслеживать выполнение теста
+    }); 
+   
+    console.log('Создание новой вкладки в браузере');
+    const page = await browser.newPage();  
+    console.log('Переход по ссылке');
+    await page.goto(URL_TEST); 
+    await page.setViewport({width: 1920, height: 1080});
+
+    const laptop = await page.waitForSelector('.list-group [onclick*=not]');
+    await laptop.click();
+
+    const macBookAir = await page.waitForSelector('[href="prod.html?idp_=11"]');
+    await macBookAir.click();
+
+    const buyMac = await page.waitForSelector('[onclick*="addToCart(11)"]');
+    await buyMac.click();
+
+    page.on('dialog', async dialog => { // создали обработчик диалогов
+        await dialog.dismiss(); 
+        return true; // нажать ок в окне alert 
+    });
+   
+    const cart = await page.waitForSelector('#cartur');
+    await cart.click();
+
+    const placeOrder = await page.waitForSelector('.btn.btn-success');
+    await placeOrder.click();
+
+    const nameInput = await page.$('#name');
+    await nameInput.type('Daniil');
+
+    const countyInput = await page.$('#country');
+    await countyInput.type('Russia');
+
+    const cityInput = await page.$('#city');
+    await cityInput.type('Ekaterinburg');
+
+    const cardInput = await page.$('#card');
+    await cardInput.type('229712397897530923');
+
+    const monthInput = await page.$('#month');
+    await monthInput.type('March');
+
+    const yearInput = await page.$('#year');
+    await yearInput.type('2025');
+
+    const purchase = await page.waitForSelector('[onclick*="purchaseOrder()"]');
+    await purchase.click();
+
+    await page.screenshot({path:'1.png'}); // снятие скриншота 
+
+    const text = await page.$eval('.lead.text-muted', element => element.textContent);// получить текст 
+
+    console.log('Проверка условия тест-кейса');
+    console.log('Текст содержит:' + text);
+
+await new Promise(r => setTimeout(r, 2000));
+    console.log('Закрытие браузера');
+    await browser.close(); 
+};
+
+testProductStore(); // вызов пустой функции, ничего не произошло  
+
